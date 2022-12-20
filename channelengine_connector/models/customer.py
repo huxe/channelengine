@@ -187,8 +187,10 @@ class inheritedDeliveries(models.Model):
             elif self.sale_id and self.channelengine_return_id and self.picking_type_code == 'incoming':
                 self.receive_return()
             elif self.sale_id and not self.channelengine_return_id and self.picking_type_code == 'incoming':
-                if self.merchant_return_number:
+                if self.merchant_return_number and self.return_reason:
                     self.create_return_channelengine()
+                elif not self.return_reason:
+                    raise UserError('Please enter Return Reason')
                 else:
                     raise UserError('Please enter Merchant Return Number')
         return res
