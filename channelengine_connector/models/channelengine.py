@@ -347,75 +347,75 @@ class inh_Product(models.Model):
         # raise UserError(response.text)
 
     
-    # def main_sync(self):
-    #     prods_template=self.env['product.template'].search([('product_template_sync','=',True)])
-    #     self.parent_product_stock_sync(prods_template)
-    #     prods=self.env['product.product'].search([('product_sync','=',True)])
-    #     prods.product_stock_sync()
+    def main_sync(self):
+        prods_template=self.env['product.template'].search([('product_template_sync','=',True)])
+        self.parent_product_stock_sync(prods_template)
+        prods=self.env['product.product'].search([('product_sync','=',True)])
+        prods.product_stock_sync()
 
-    # def parent_product_stock_sync(self, prods_template):    
-    #     api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-    #     cred=api_info[0]
-    #     url=cred.channel_engine_url+"/products?apikey="+cred.api_key
-    #     payload = {
-    #                 "PropertiesToUpdate": [
-    #                 "Stock",
-    #                 "Name",
-    #                 "Price",
-    #                 "PurchasePrice"
-    #                 ],
-    #                 "MerchantProductRequestModels": [
-    #                 ]
-    #             }
-    #     for product in prods_template:
-    #         if product.product_template_sync and product.product_template_default_code:
-    #             product_dict = {
-    #                 "MerchantProductNo": product.product_template_default_code,
-    #                 "Stock": int(product.qty_available),
-    #                 "Name": product.name,
-    #                 "Price": product.list_price,
-    #                 "PurchasePrice": product.standard_price
-    #             }
-    #             payload["MerchantProductRequestModels"].append(product_dict)
+    def parent_product_stock_sync(self, prods_template):    
+        api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
+        cred=api_info[0]
+        url=cred.channel_engine_url+"/products?apikey="+cred.api_key
+        payload = {
+                    "PropertiesToUpdate": [
+                    "Stock",
+                    "Name",
+                    "Price",
+                    "PurchasePrice"
+                    ],
+                    "MerchantProductRequestModels": [
+                    ]
+                }
+        for product in prods_template:
+            if product.product_template_sync and product.product_template_default_code:
+                product_dict = {
+                    "MerchantProductNo": product.product_template_default_code,
+                    "Stock": int(product.qty_available),
+                    "Name": product.name,
+                    "Price": product.list_price,
+                    "PurchasePrice": product.standard_price
+                }
+                payload["MerchantProductRequestModels"].append(product_dict)
 
-    #     headers = {
-    #         'Content-Type': 'application/json'
-    #     }
-    #     json_payload = json.dumps(payload)
-    #     response = requests.request("PATCH", url, headers=headers, data=json_payload)
-    #     # raise UserError(str(response.text))
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        json_payload = json.dumps(payload)
+        response = requests.request("PATCH", url, headers=headers, data=json_payload)
+        # raise UserError(str(response.text))
     
-    # def product_stock_sync(self):    
-    #     api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-    #     cred=api_info[0]
-    #     url=cred.channel_engine_url+"/products?apikey="+cred.api_key
-    #     payload = {
-    #                 "PropertiesToUpdate": [
-    #                 "Stock",
-    #                 "Name",
-    #                 "Price",
-    #                 "PurchasePrice"
-    #                 ],
-    #                 "MerchantProductRequestModels": [
-    #                 ]
-    #             }
-    #     for product in self:
-    #         if product.product_sync and product.default_code:
-    #             product_dict = {
-    #                 "MerchantProductNo": product.default_code,
-    #                 "Stock": int(product.qty_available),
-    #                 "Name": product.name,
-    #                 "Price": product.list_price,
-    #                 "PurchasePrice": product.standard_price
-    #             }
-    #             payload["MerchantProductRequestModels"].append(product_dict)
+    def product_stock_sync(self):    
+        api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
+        cred=api_info[0]
+        url=cred.channel_engine_url+"/products?apikey="+cred.api_key
+        payload = {
+                    "PropertiesToUpdate": [
+                    "Stock",
+                    "Name",
+                    "Price",
+                    "PurchasePrice"
+                    ],
+                    "MerchantProductRequestModels": [
+                    ]
+                }
+        for product in self:
+            if product.product_sync and product.default_code:
+                product_dict = {
+                    "MerchantProductNo": product.default_code,
+                    "Stock": int(product.qty_available),
+                    "Name": product.name,
+                    "Price": product.list_price,
+                    "PurchasePrice": product.standard_price
+                }
+                payload["MerchantProductRequestModels"].append(product_dict)
 
-    #     headers = {
-    #         'Content-Type': 'application/json'
-    #     }
-    #     json_payload = json.dumps(payload)
-    #     response = requests.request("PATCH", url, headers=headers, data=json_payload)
-    #     # raise UserError(str(response.text))
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        json_payload = json.dumps(payload)
+        response = requests.request("PATCH", url, headers=headers, data=json_payload)
+        # raise UserError(str(response.text))
 
                 
 
