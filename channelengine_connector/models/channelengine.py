@@ -173,7 +173,7 @@ class inh_Product(models.Model):
                             product_dict.update({"ImageUrl":"https://huxe-channelengine.odoo.com"+img_recs.local_url})
                         else:
                             #Replace localhost Url
-                            product_dict.update({"ExtraImageUrl"+img_counter:"https://huxe-channelengine.odoo.com"+img_recs.local_url})
+                            product_dict.update({"ExtraImageUrl"+str(img_counter):"https://huxe-channelengine.odoo.com"+img_recs.local_url})
                             img_counter+=1
                     product_dict.update({
                             "Name": product.name,
@@ -288,7 +288,7 @@ class inh_Product(models.Model):
                             product_dict.update({"ImageUrl":"https://huxe-channelengine.odoo.com"+img_recs.local_url})
                         else:
                             #Replace localhost Url
-                            product_dict.update({"ExtraImageUrl"+img_counter:"https://huxe-channelengine.odoo.com"+img_recs.local_url})
+                            product_dict.update({"ExtraImageUrl"+str(img_counter):"https://huxe-channelengine.odoo.com"+img_recs.local_url})
                             img_counter+=1
                     product_dict.update({
                             "Name": product.display_name,
