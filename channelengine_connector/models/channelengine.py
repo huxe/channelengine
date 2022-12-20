@@ -3,7 +3,6 @@ import json
 from odoo.exceptions import UserError
 from odoo import models, fields, api, exceptions
 
-
 class Credential(models.Model):
     _name = "channelengine.credential"
 
