@@ -16,6 +16,18 @@ class inheritedDeliveries(models.Model):
     return_status=fields.Char(string="Return Information")
     merchant_return_number=fields.Char(string="Merchant Return Number")
     channelengine_return_id=fields.Char(string="Return ID")
+    return_reason = fields.Selection(selection=[
+            ('PRODUCT_DEFECT', 'PRODUCT_DEFECT'),
+            ('PRODUCT_UNSATISFACTORY', 'PRODUCT_UNSATISFACTORY'),
+            ('WRONG_PRODUCT', 'WRONG_PRODUCT'),
+            ('TOO_MANY_PRODUCTS', 'TOO_MANY_PRODUCTS'),
+            ('REFUSED', 'REFUSED'),
+            ('REFUSED_DAMAGED', 'REFUSED_DAMAGED'),
+            ('WRONG_ADDRESS', 'WRONG_ADDRESS'),
+            ('NOT_COLLECTED', 'NOT_COLLECTED'),
+            ('WRONG_SIZE', 'WRONG_SIZE'),
+            ('OTHER', 'OTHER')
+        ], string='Return Reason')
 
     def create_return_odoo(self):
         api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
@@ -39,16 +51,9 @@ class inheritedDeliveries(models.Model):
                     for line in data['Lines']:
                         prod = self.env['product.product'].search([('default_code','=',line['MerchantProductNo'])])
                         if prod:
-                        # product_name = self.env['product.product'].search([('default_code','=',line['MerchantProductNo'])]).display_name
-                        # raise UserError(prod.id)
+                      
                             returnLines.append((0,0,{
-                                # 'name': prod.display_name,
-                                # 'product_id':prod.id,
-                                # 'product_uom_qty':line['Quantity'],
-                                # 'product_uom_id':1,
-                                # 'location_id':5,
-                                # 'location_dest_id':8,
-                                # 'state':'draft'
+                              
                                 'name':prod.display_name or '',
                                 'product_id':prod.id,
                                 'product_uom':prod.uom_id.id,
@@ -75,7 +80,8 @@ class inheritedDeliveries(models.Model):
                         'state':'draft',
                         'return_status': 'Created from Shipping Engine!',
                         'channelengine_return_id': data['Id'],
-                        'merchant_return_number': data['MerchantReturnNo']
+                        'merchant_return_number': data['MerchantReturnNo'],
+                        'return_reason': data['Reason']
                     })
 
 
@@ -133,6 +139,7 @@ class inheritedDeliveries(models.Model):
                 {
                     "MerchantOrderNo": self.sale_id.channelengine_merchantOrderNo,
                     "MerchantReturnNo": self.merchant_return_number,
+                    "Reason": self.return_reason,
                     "Lines": line_list,
                     "ReturnDate": str(self.scheduled_date),
                 }
@@ -173,10 +180,10 @@ class inheritedDeliveries(models.Model):
             elif self.sale_id and self.channelengine_return_id and self.picking_type_code == 'incoming':
                 self.receive_return()
             elif self.sale_id and not self.channelengine_return_id and self.picking_type_code == 'incoming':
-                if self.merchant_return_number:
+                if self.merchant_return_number and self.return_reason:
                     self.create_return_channelengine()
                 else:
-                    raise UserError('Please enter Merchant Return Number')
+                    raise UserError('Merchant Return Number or Return Reason is missing')
         return res
 
     def create_shipment(self):
@@ -320,8 +327,7 @@ class inheritedSales(models.Model):
                 response = requests.request("POST", url, headers=headers, data=payload)
                 if response.status_code == 201:
                     sale_order.channelengine_orderStatus = 'IN_PROGRESS'
-                    #fetch merchant order no for shipment
-                    # https://vandewaetere-trading-bv-dev.channelengine.net/api/v2/orders?apikey=b536e286af2ac6436fdc5c926315d822166cd64c&Id=10
+                  
                     innerurl=cred.channel_engine_url+"/orders?apikey="+cred.api_key
                     innerresponse = requests.request("GET", innerurl, headers={}, data={})
                     innerdictt=innerresponse.json()
@@ -437,23 +443,6 @@ class inheritedCompany(models.Model):
                     'channelengine_merchantOrderNo': data['MerchantOrderNo'],
                     'order_line': order_lines,
                 })
-# class inheritedCategory(models.Model):
-#     _inherit="product.category"
-#     def all_true(self):
-#         for records in self:
-#             records.category_sync=True
-
-# class inheritedParent(models.Model):
-#     _inherit="product.template"
-#     def parent_true(self):
-#         for records in self:
-#             records.product_template_sync=True
-
-# class inheritedChild(models.Model):
-#     _inherit="product.product"
-#     def child_true(self):
-#         for records in self:
-#             records.product_sync=True
 
     
 

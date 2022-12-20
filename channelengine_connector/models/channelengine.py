@@ -23,6 +23,11 @@ class inheritProductCategory(models.Model):
     category_code=fields.Char(string="Grand Parent Internal Reference")
     ean_number=fields.Char(string="Ean")
 
+    @api.onchange('ean_number')
+    def update_active_prods(self):
+        if self.category_sync == True:
+            self.category_sync = False
+
 class inheritProductTemplate(models.Model):
     _inherit="product.template"
     
@@ -30,6 +35,11 @@ class inheritProductTemplate(models.Model):
     product_template_default_code=fields.Char(string="Parent Internal Reference")
     product_images = fields.One2many('ir.attachment', 'product_template_id', string='Product Images (Not more than 10)')
     ean_number=fields.Char(string="Ean")
+
+    @api.onchange('product_images','ean_number','name','list_price','qty_available','standard_price')
+    def update_active_prods(self):
+        if self.product_template_sync == True:
+            self.product_template_sync = False
 
 class inheritProductTemplate(models.Model):
     _inherit="ir.attachment"
@@ -43,7 +53,11 @@ class inh_Product(models.Model):
     product_sync=fields.Boolean(string="Product Variant Sync")
     ean_number=fields.Char(string="Ean")
     product_images = fields.One2many('ir.attachment', 'product_product_id', string='Product Images (Not more than 10)')
-    # parent_product=fields.Many2one('product.template', string="Parent Product")
+    
+    @api.onchange('product_images','ean_number','name','list_price','qty_available','standard_price')
+    def update_active_childprods(self):
+        if self.product_sync == True:
+            self.product_sync = False
 
     #overriding write for archiving products on channel engine
     def write(self, values):
@@ -66,7 +80,7 @@ class inh_Product(models.Model):
         return res
 
     def sync_odoo_prod(self):
-        #tv-11 -> tv-12
+   
         categories=self.env['product.category'].search([('category_sync','=',False)])
         self.create_grandparent_product(categories)
         prods_template=self.env['product.template'].search([('product_template_sync','=',False)])
@@ -83,12 +97,7 @@ class inh_Product(models.Model):
                         "Name": categ.display_name,
                         "MerchantProductNo": categ.category_code,
                         "Stock": 1,
-                        # "ExtraData": [
-                        #     {
-                        #         "Type": "Parent",
-                        #         "IsPublic": False,
-                        #     }
-                        # ],
+                      
                         "Price": 1,
                         "Ean": categ.ean_number,
                         "PurchasePrice": 1,
@@ -106,41 +115,22 @@ class inh_Product(models.Model):
             }
 
             response = requests.request("POST", url, headers=headers, data=payload)
-            # raise UserError(response.text)
+           
                 
 
     def create_parent_product(self, prods_template):
-        # url = "https://vandewaetere-trading-bv-dev.channelengine.net/api/v2/products?apikey=b536e286af2ac6436fdc5c926315d822166cd64c"
+     
         product_create=[]
-        # api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-        # cred=api_info[0]
+       
         for product in prods_template:
-            #Asir
+            
             if not product.product_template_sync and product.product_template_default_code:
                 if '/' in product.categ_id.display_name:
                     category_trail = product.categ_id.display_name.replace('/','>')
                 else:
                     category_trail = product.categ_id.display_name
 
-                # product_create.append(
-                #     {
-                #         "Name": product.name,
-                #         "MerchantProductNo": product.product_template_default_code,
-                #         "ParentMerchantProductNo2": product.categ_id.category_code,
-                #         "ParentMerchantProductNo": "",
-                #         "Stock": int(product.qty_available),
-                #         # "ExtraData": [
-                #         #     {
-                #         #         "Type": "Parent",
-                #         #         "IsPublic": False,
-                #         #     }
-                #         # ],
-                #         "Price": product.list_price,
-                #         "Ean": product.ean_number,
-                #         "PurchasePrice": product.standard_price,
-                #         "CategoryTrail": category_trail
-                #     }
-                # )
+           
 
                 if product.product_images:
                     first_image = {}
@@ -165,12 +155,7 @@ class inh_Product(models.Model):
                             "ParentMerchantProductNo2": product.categ_id.category_code,
                             "ParentMerchantProductNo": "",
                             "Stock": int(product.qty_available),
-                            # "ExtraData": [
-                            #     {
-                            #         "Type": "Parent",
-                            #         "IsPublic": False,
-                            #     }
-                            # ],
+                         
                             "Price": product.list_price,
                             "Ean": product.ean_number,
                             "PurchasePrice": product.standard_price,
@@ -185,12 +170,7 @@ class inh_Product(models.Model):
                             "ParentMerchantProductNo2": product.categ_id.category_code,
                             "ParentMerchantProductNo": "",
                             "Stock": int(product.qty_available),
-                            # "ExtraData": [
-                            #     {
-                            #         "Type": "Parent",
-                            #         "IsPublic": False,
-                            #     }
-                            # ],
+                          
                             "Price": product.list_price,
                             "Ean": product.ean_number,
                             "PurchasePrice": product.standard_price,
@@ -213,12 +193,11 @@ class inh_Product(models.Model):
             # raise UserError(response.text)
 
     def create_child_product(self, prods):
-        # url = "https://vandewaetere-trading-bv-dev.channelengine.net/api/v2/products?apikey=b536e286af2ac6436fdc5c926315d822166cd64c"
+        
         product_create=[]
-        # api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-        # cred=api_info[0]
+      
         for product in prods:
-            #Asir
+         
             if not product.product_sync and product.default_code:
                 color_val = False
                 size_val = False 
@@ -234,28 +213,6 @@ class inh_Product(models.Model):
                 else:
                     category_trail = product.categ_id.display_name
 
-                # raise UserError(product.product_tmpl_id.product_template_default_code)
-                # product_create.append(
-                #     {
-                #         "Name": product.display_name,
-                #         "ParentMerchantProductNo": product.product_tmpl_id.product_template_default_code if product.product_tmpl_id.product_template_default_code else False,
-                #         "ParentMerchantProductNo2": "",
-                #         "MerchantProductNo": product.default_code,
-                #         "Size": size_val or "",
-                #         "Color": color_val or "",
-                #         # "ExtraData": [
-                #         #     {
-                #         #         "Type": "Child",
-                #         #         "IsPublic": True,
-                #         #     }
-                #         # ],
-                #         "Stock": int(product.qty_available),
-                #         "Price": product.list_price,
-                #         "Ean": product.ean_number,
-                #         "PurchasePrice": product.standard_price,
-                #         "CategoryTrail": category_trail
-                #     }
-                # )
 
                 if product.product_images:
                     first_image = {}
@@ -270,6 +227,7 @@ class inh_Product(models.Model):
                         if img_recs.id == first_image.id:
                             #Replace localhost Url
                             product_dict.update({"ImageUrl":"http://localhost:8069"+img_recs.local_url})
+                            
                         else:
                             #Replace localhost Url
                             product_dict.update({"ExtraImageUrl"+img_counter:"http://localhost:8069"+img_recs.local_url})
@@ -281,12 +239,7 @@ class inh_Product(models.Model):
                             "MerchantProductNo": product.default_code,
                             "Size": size_val or "",
                             "Color": color_val or "",
-                            # "ExtraData": [
-                            #     {
-                            #         "Type": "Child",
-                            #         "IsPublic": True,
-                            #     }
-                            # ],
+                           
                             "Stock": int(product.qty_available),
                             "Price": product.list_price,
                             "Ean": product.ean_number,
@@ -303,12 +256,7 @@ class inh_Product(models.Model):
                             "MerchantProductNo": product.default_code,
                             "Size": size_val or "",
                             "Color": color_val or "",
-                            # "ExtraData": [
-                            #     {
-                            #         "Type": "Child",
-                            #         "IsPublic": True,
-                            #     }
-                            # ],
+                         
                             "Stock": int(product.qty_available),
                             "Price": product.list_price,
                             "Ean": product.ean_number,
@@ -331,81 +279,7 @@ class inh_Product(models.Model):
         # raise UserError(response.text)
 
     
-    def main_sync(self):
-        prods_template=self.env['product.template'].search([('product_template_sync','=',True)])
-        self.parent_product_stock_sync(prods_template)
-        prods=self.env['product.product'].search([('product_sync','=',True)])
-        prods.product_stock_sync()
 
-    def parent_product_stock_sync(self, prods_template):    
-        api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-        cred=api_info[0]
-        url=cred.channel_engine_url+"/products?apikey="+cred.api_key
-        payload = {
-                    "PropertiesToUpdate": [
-                    "Stock",
-                    "Name",
-                    "Price",
-                    "PurchasePrice"
-                    ],
-                    "MerchantProductRequestModels": [
-                    ]
-                }
-        for product in prods_template:
-            if product.product_template_sync and product.product_template_default_code:
-                product_dict = {
-                    "MerchantProductNo": product.product_template_default_code,
-                    "Stock": int(product.qty_available),
-                    "Name": product.name,
-                    "Price": product.list_price,
-                    "PurchasePrice": product.standard_price
-                }
-                payload["MerchantProductRequestModels"].append(product_dict)
-
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        json_payload = json.dumps(payload)
-        response = requests.request("PATCH", url, headers=headers, data=json_payload)
-        # raise UserError(str(response.text))
-    
-    def product_stock_sync(self):    
-        api_info=self.env['channelengine.credential'].search([("isActive",'=',True)])
-        cred=api_info[0]
-        url=cred.channel_engine_url+"/products?apikey="+cred.api_key
-        payload = {
-                    "PropertiesToUpdate": [
-                    "Stock",
-                    "Name",
-                    "Price",
-                    "PurchasePrice"
-                    ],
-                    "MerchantProductRequestModels": [
-                    ]
-                }
-        for product in self:
-            if product.product_sync and product.default_code:
-                product_dict = {
-                    "MerchantProductNo": product.default_code,
-                    "Stock": int(product.qty_available),
-                    "Name": product.name,
-                    "Price": product.list_price,
-                    "PurchasePrice": product.standard_price
-                }
-                payload["MerchantProductRequestModels"].append(product_dict)
-
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        json_payload = json.dumps(payload)
-        response = requests.request("PATCH", url, headers=headers, data=json_payload)
-        # raise UserError(str(response.text))
-
-                
-
-
-                
-                    
 
  
 
