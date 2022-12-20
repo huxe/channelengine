@@ -28,6 +28,7 @@
               <xpath position="after" expr="//field[@name='default_code']">
                 <field name="product_template_default_code"/>
                 <field name="ean_number"/>
+                <field name="product_sync"/>
                 <field name="product_images" context="{'default_public': True}">
                     <tree>
                         <field name="name" string="Name"/>                                                       
